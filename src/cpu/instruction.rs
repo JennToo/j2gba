@@ -67,7 +67,7 @@ impl std::fmt::Display for ConditionCode {
 
 #[cfg(test)]
 mod test {
-    use crate::cpu::instruction::ConditionCode;
+    use super::*;
 
     #[test]
     fn decode_condition_codes() {
