@@ -1,3 +1,5 @@
+use super::Register;
+
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum ConditionCode {
     Equal,
@@ -63,6 +65,19 @@ impl std::fmt::Display for ConditionCode {
             ConditionCode::Never => write!(f, "nv"),
         }
     }
+}
+
+pub enum ShifterOperand {
+    Immediate { immediate: u8, rotate: u8 },
+    LogicalLeftShiftImmediate { source: Register, shifter: u8 },
+    LogicalLeftShiftRegister { source: Register, shifter: Register },
+    LogicalRightShiftImmediate { source: Register, shifter: u8 },
+    LogicalRightShiftRegister { source: Register, shifter: Register },
+    ArtithmeticRightShiftImmediate { source: Register, shifter: u8 },
+    ArithmeticRightShiftRegister { source: Register, shifter: Register },
+    RotateRightImmediate { source: Register, rotate: u8 },
+    RotateRightRegister { source: Register, rotate: Register },
+    RotateRightExtended { source: Register },
 }
 
 #[cfg(test)]
