@@ -1,0 +1,7 @@
+.ifndef COMMON_DEFS
+.set COMMON_DEFS, 1
+
+.set DISPLAYCNT, 0x4000000
+.set BG0CNT,     0x4000008
+
+.endif

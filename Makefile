@@ -5,6 +5,8 @@ OBJCOPY = arm-none-eabi-objcopy
 ASM_SRCS := $(shell find tests/roms -type f -name '*.s')
 ASM_OBJS := $(ASM_SRCS:tests/roms/%.s=target/test-roms/%.o)
 
+ASM_INCLUDES := $(shell find tests/roms -type f -name '*.inc')
+
 ROM_SRCS := $(wildcard tests/roms/*.s)
 ROM_ELVES := $(ROM_SRCS:tests/roms/%.s=target/test-roms/%.elf)
 ROMS := $(ROM_ELVES:%.elf=%.gba)
@@ -13,7 +15,7 @@ COMMON_SRCS := $(wildcard tests/roms/common/*.s)
 COMMON_OBJS := $(COMMON_SRCS:tests/roms/%.s=target/test-roms/%.o)
 
 LDFLAGS := -T linker.ld
-ASFLAGS := -march=armv4t -I target/test-roms/common
+ASFLAGS := -march=armv4t -I target/test-roms/common -I tests/roms/common
 
 FONT_SRC := tests/roms/common/font.png
 FONT_BIN := target/test-roms/common/font.bin
@@ -28,7 +30,7 @@ $(ROMS): target/test-roms/%.gba: target/test-roms/%.elf
 $(ROM_ELVES): $(ASM_OBJS)
 	$(LD) $(LDFLAGS) $(COMMON_OBJS) $(@:%.elf=%.o) -o $@
 
-$(ASM_OBJS): target/test-roms/%.o: tests/roms/%.s $(FONT_BIN)
+$(ASM_OBJS): target/test-roms/%.o: tests/roms/%.s $(FONT_BIN) $(ASM_INCLUDES)
 	mkdir -p $(@D)
 	$(AS) $(ASFLAGS) $< -o $@
 
