@@ -40,6 +40,7 @@ __start:
 .Lskip:
     @ jump to user code
     ldr r0, =main
+    add r0,#1
     bx r0
 
 .arm
