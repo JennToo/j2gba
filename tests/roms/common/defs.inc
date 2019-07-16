@@ -3,5 +3,7 @@
 
 .set DISPLAYCNT, 0x4000000
 .set BG0CNT,     0x4000008
+.set BGHOFS,     0x4000010
+.set BGVOFS,     0x4000012
 
 .endif

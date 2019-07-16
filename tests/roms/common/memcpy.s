@@ -1,4 +1,5 @@
 .global simple_memcpy
+.global simple_strcpy
 
 .section .text
 .thumb
@@ -16,12 +17,26 @@
 // source and destination must be word aligned
 simple_memcpy:
     cmp r2,#0
-    beq .Ldone
+    beq .Ldone_simple_memcpy
     ldr r3,[r1]
     str r3,[r0]
     add r0,#4
     add r1,#4
     sub r2,#4
     b simple_memcpy
-.Ldone:
+.Ldone_simple_memcpy:
+    bx lr
+
+// r0 - destination
+// r1 - source
+// r2 - clobbered
+simple_strcpy:
+    ldr r2,[r1]
+    cmp r2,#0
+    beq .Ldone_simple_strcpy
+    str r2,[r0]
+    add r0,#4
+    add r1,#4
+    b simple_strcpy
+.Ldone_simple_strcpy:
     bx lr
