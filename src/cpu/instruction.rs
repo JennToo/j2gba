@@ -1,4 +1,5 @@
 use super::Register;
+use crate::util::*;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum ConditionCode {
@@ -67,8 +68,9 @@ impl std::fmt::Display for ConditionCode {
     }
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum ShifterOperand {
-    Immediate { immediate: u8, rotate: u8 },
+    Immediate { value: u8, rotate: u8 },
     LogicalLeftShiftImmediate { source: Register, shifter: u8 },
     LogicalLeftShiftRegister { source: Register, shifter: Register },
     LogicalRightShiftImmediate { source: Register, shifter: u8 },
@@ -78,6 +80,15 @@ pub enum ShifterOperand {
     RotateRightImmediate { source: Register, rotate: u8 },
     RotateRightRegister { source: Register, rotate: Register },
     RotateRightExtended { source: Register },
+}
+
+impl ShifterOperand {
+    pub fn from_immediate(bits: u16) -> Self {
+        ShifterOperand::Immediate {
+            value: bits.get_bits(Offset(0), Length(8)) as u8,
+            rotate: bits.get_bits(Offset(8), Length(4)) as u8,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -115,6 +126,18 @@ mod test {
                 "eq", "ne", "cs", "cc", "mi", "pl", "vs", "vc", "hi", "ls", "ge", "lt", "gt", "le",
                 "al", "nv"
             ]
+        );
+    }
+
+    #[test]
+    fn shifter_operand() {
+        let result = ShifterOperand::from_immediate(0b11111010_11001100);
+        assert_eq!(
+            result,
+            ShifterOperand::Immediate {
+                value: 0b11001100,
+                rotate: 0b1010
+            }
         );
     }
 }
