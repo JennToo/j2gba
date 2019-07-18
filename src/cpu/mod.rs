@@ -11,26 +11,8 @@ impl Register {
         assert!(index < REGISTER_COUNT);
         Register(index as u8)
     }
-    pub fn from_bit_offset(data: u32, bit_offset: u32) -> Self {
-        Register(((data >> bit_offset) & REGISTER_MASK) as u8)
-    }
 
     pub fn index(self) -> usize {
         self.0 as usize
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn decode_register() {
-        assert_eq!(Register::from_index(12).index(), 12);
-
-        assert_eq!(
-            Register::from_bit_offset(0b1111_0000, 4),
-            Register::from_index(15)
-        );
     }
 }
