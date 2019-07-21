@@ -68,19 +68,31 @@ impl std::fmt::Display for ConditionCode {
     }
 }
 
-// TODO: Refactor into a better structure
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum ShifterOperand {
-    Immediate { value: u8, rotate: u8 },
-    LogicalLeftShiftImmediate { source: Register, shifter: u8 },
-    LogicalLeftShiftRegister { source: Register, shifter: Register },
-    LogicalRightShiftImmediate { source: Register, shifter: u8 },
-    LogicalRightShiftRegister { source: Register, shifter: Register },
-    ArithmeticRightShiftImmediate { source: Register, shifter: u8 },
-    ArithmeticRightShiftRegister { source: Register, shifter: Register },
-    RotateRightImmediate { source: Register, rotate: u8 },
-    RotateRightRegister { source: Register, rotate: Register },
-    RotateRightExtended { source: Register },
+    Immediate {
+        value: u8,
+        rotate: u8,
+    },
+    Shift {
+        operation: ShiftOperation,
+        source: Register,
+        operand: ShiftOperand,
+    },
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum ShiftOperation {
+    LogicalLeft,
+    LogicalRight,
+    ArithmeticRight,
+    RotateRight,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum ShiftOperand {
+    Register(Register),
+    Value(u8),
 }
 
 impl ShifterOperand {
@@ -92,47 +104,26 @@ impl ShifterOperand {
     }
 
     pub fn from_register_operand(bits: u16) -> Self {
-        let discriminant = bits.get_bits(Offset(4), Length(3));
+        let operand = if bits.get_bits(Offset(4), Length(1)) == 1 {
+            ShiftOperand::Register(bits.get_register(Offset(8)))
+        } else {
+            ShiftOperand::Value(bits.get_bits(Offset(7), Length(4)) as u8)
+        };
+
+        let operation = match bits.get_bits(Offset(5), Length(2)) {
+            0b00 => ShiftOperation::LogicalLeft,
+            0b01 => ShiftOperation::LogicalRight,
+            0b10 => ShiftOperation::ArithmeticRight,
+            0b11 => ShiftOperation::RotateRight,
+            _ => unreachable!(),
+        };
 
         let source = bits.get_register(Offset(0));
-        match discriminant {
-            0b000 => ShifterOperand::LogicalLeftShiftImmediate {
-                source,
-                shifter: bits.get_bits(Offset(7), Length(4)) as u8,
-            },
-            0b001 => ShifterOperand::LogicalLeftShiftRegister {
-                source,
-                shifter: bits.get_register(Offset(8)),
-            },
-            0b010 => ShifterOperand::LogicalRightShiftImmediate {
-                source,
-                shifter: bits.get_bits(Offset(7), Length(4)) as u8,
-            },
-            0b011 => ShifterOperand::LogicalRightShiftRegister {
-                source,
-                shifter: bits.get_register(Offset(8)),
-            },
-            0b100 => ShifterOperand::ArithmeticRightShiftImmediate {
-                source,
-                shifter: bits.get_bits(Offset(7), Length(4)) as u8,
-            },
-            0b101 => ShifterOperand::ArithmeticRightShiftRegister {
-                source,
-                shifter: bits.get_register(Offset(8)),
-            },
-            0b110 => {
-                let rotate = bits.get_bits(Offset(7), Length(4)) as u8;
-                if rotate == 0 {
-                    ShifterOperand::RotateRightExtended { source }
-                } else {
-                    ShifterOperand::RotateRightImmediate { source, rotate }
-                }
-            }
-            0b111 => ShifterOperand::RotateRightRegister {
-                source,
-                rotate: bits.get_register(Offset(8)),
-            },
-            _ => unreachable!(),
+
+        ShifterOperand::Shift {
+            operation,
+            operand,
+            source,
         }
     }
 }
@@ -195,7 +186,6 @@ mod test {
             0b10110_101_0101,
             0b11001_110_0101,
             0b10110_111_0101,
-            0b00000_110_0101,
         ];
         let decoded_shifters: Vec<_> = raw_shifters
             .iter()
@@ -204,41 +194,46 @@ mod test {
         assert_eq!(
             decoded_shifters.as_slice(),
             [
-                ShifterOperand::LogicalLeftShiftImmediate {
+                ShifterOperand::Shift {
                     source: Register(5),
-                    shifter: 9
+                    operation: ShiftOperation::LogicalLeft,
+                    operand: ShiftOperand::Value(9)
                 },
-                ShifterOperand::LogicalLeftShiftRegister {
+                ShifterOperand::Shift {
                     source: Register(5),
-                    shifter: Register(11)
+                    operation: ShiftOperation::LogicalLeft,
+                    operand: ShiftOperand::Register(Register(11))
                 },
-                ShifterOperand::LogicalRightShiftImmediate {
+                ShifterOperand::Shift {
                     source: Register(5),
-                    shifter: 9
+                    operation: ShiftOperation::LogicalRight,
+                    operand: ShiftOperand::Value(9)
                 },
-                ShifterOperand::LogicalRightShiftRegister {
+                ShifterOperand::Shift {
                     source: Register(5),
-                    shifter: Register(11)
+                    operation: ShiftOperation::LogicalRight,
+                    operand: ShiftOperand::Register(Register(11))
                 },
-                ShifterOperand::ArithmeticRightShiftImmediate {
+                ShifterOperand::Shift {
                     source: Register(5),
-                    shifter: 9
+                    operation: ShiftOperation::ArithmeticRight,
+                    operand: ShiftOperand::Value(9)
                 },
-                ShifterOperand::ArithmeticRightShiftRegister {
+                ShifterOperand::Shift {
                     source: Register(5),
-                    shifter: Register(11)
+                    operation: ShiftOperation::ArithmeticRight,
+                    operand: ShiftOperand::Register(Register(11))
                 },
-                ShifterOperand::RotateRightImmediate {
+                ShifterOperand::Shift {
                     source: Register(5),
-                    rotate: 9
+                    operation: ShiftOperation::RotateRight,
+                    operand: ShiftOperand::Value(9)
                 },
-                ShifterOperand::RotateRightRegister {
+                ShifterOperand::Shift {
                     source: Register(5),
-                    rotate: Register(11)
+                    operation: ShiftOperation::RotateRight,
+                    operand: ShiftOperand::Register(Register(11))
                 },
-                ShifterOperand::RotateRightExtended {
-                    source: Register(5),
-                }
             ]
         );
     }
