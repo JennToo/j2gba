@@ -2,6 +2,13 @@ use super::Register;
 use crate::util::*;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum DecodeError {
+    InvalidShifterOperand(u16),
+}
+
+type Result<T> = std::result::Result<T, DecodeError>;
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum ConditionCode {
     Equal,
     NotEqual,
@@ -103,8 +110,11 @@ impl ShifterOperand {
         }
     }
 
-    pub fn from_register_operand(bits: u16) -> Self {
+    pub fn from_register_operand(bits: u16) -> Result<Self> {
         let operand = if bits.is_flag_set(Offset(4)) {
+            if bits.is_flag_set(Offset(7)) {
+                return Err(DecodeError::InvalidShifterOperand(bits));
+            }
             ShiftOperand::Register(bits.get_register(Offset(8)))
         } else {
             ShiftOperand::Value(bits.get_bits(Offset(7), Length(4)) as u8)
@@ -120,11 +130,11 @@ impl ShifterOperand {
 
         let source = bits.get_register(Offset(0));
 
-        ShifterOperand::Shift {
+        Ok(ShifterOperand::Shift {
             operation,
             operand,
             source,
-        }
+        })
     }
 }
 
@@ -186,6 +196,7 @@ mod test {
             0b10110_101_0101,
             0b11001_110_0101,
             0b10110_111_0101,
+            0b10111_001_0101,
         ];
         let decoded_shifters: Vec<_> = raw_shifters
             .iter()
@@ -194,46 +205,47 @@ mod test {
         assert_eq!(
             decoded_shifters.as_slice(),
             [
-                ShifterOperand::Shift {
+                Ok(ShifterOperand::Shift {
                     source: Register(5),
                     operation: ShiftOperation::LogicalLeft,
                     operand: ShiftOperand::Value(9)
-                },
-                ShifterOperand::Shift {
+                }),
+                Ok(ShifterOperand::Shift {
                     source: Register(5),
                     operation: ShiftOperation::LogicalLeft,
                     operand: ShiftOperand::Register(Register(11))
-                },
-                ShifterOperand::Shift {
+                }),
+                Ok(ShifterOperand::Shift {
                     source: Register(5),
                     operation: ShiftOperation::LogicalRight,
                     operand: ShiftOperand::Value(9)
-                },
-                ShifterOperand::Shift {
+                }),
+                Ok(ShifterOperand::Shift {
                     source: Register(5),
                     operation: ShiftOperation::LogicalRight,
                     operand: ShiftOperand::Register(Register(11))
-                },
-                ShifterOperand::Shift {
+                }),
+                Ok(ShifterOperand::Shift {
                     source: Register(5),
                     operation: ShiftOperation::ArithmeticRight,
                     operand: ShiftOperand::Value(9)
-                },
-                ShifterOperand::Shift {
+                }),
+                Ok(ShifterOperand::Shift {
                     source: Register(5),
                     operation: ShiftOperation::ArithmeticRight,
                     operand: ShiftOperand::Register(Register(11))
-                },
-                ShifterOperand::Shift {
+                }),
+                Ok(ShifterOperand::Shift {
                     source: Register(5),
                     operation: ShiftOperation::RotateRight,
                     operand: ShiftOperand::Value(9)
-                },
-                ShifterOperand::Shift {
+                }),
+                Ok(ShifterOperand::Shift {
                     source: Register(5),
                     operation: ShiftOperation::RotateRight,
                     operand: ShiftOperand::Register(Register(11))
-                },
+                }),
+                Err(DecodeError::InvalidShifterOperand(0b10111_001_0101)),
             ]
         );
     }
