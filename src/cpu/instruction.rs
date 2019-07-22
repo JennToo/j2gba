@@ -104,7 +104,7 @@ impl ShifterOperand {
     }
 
     pub fn from_register_operand(bits: u16) -> Self {
-        let operand = if bits.get_bits(Offset(4), Length(1)) == 1 {
+        let operand = if bits.is_flag_set(Offset(4)) {
             ShiftOperand::Register(bits.get_register(Offset(8)))
         } else {
             ShiftOperand::Value(bits.get_bits(Offset(7), Length(4)) as u8)

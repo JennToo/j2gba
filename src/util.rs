@@ -3,6 +3,7 @@ use crate::cpu::Register;
 pub trait GetBits: Sized {
     fn get_bits(self: Self, offset: Offset<Self>, length: Length<Self>) -> Self;
     fn get_register(self: Self, offset: Offset<Self>) -> Register;
+    fn is_flag_set(self: Self, offset: Offset<Self>) -> bool;
 }
 
 pub struct Offset<T>(pub T);
@@ -16,8 +17,13 @@ macro_rules! impl_get_bits {
                 let mask = (1 << length.0) - 1;
                 (self >> offset.0) & mask
             }
+
             fn get_register(self: Self, offset: Offset<Self>) -> Register {
                 Register::from_index(self.get_bits(offset, Length(4)) as usize)
+            }
+
+            fn is_flag_set(self: Self, offset: Offset<Self>) -> bool {
+                self.get_bits(offset, Length(1)) == 1
             }
         }
     };
