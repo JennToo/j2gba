@@ -1,0 +1,12 @@
+on: push
+name: CI Tests
+jobs:
+  ci:
+    name: CI Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: Nitori-/rust-actions/get-rust@master
+      - run: "cargo fmt -- --check"
+      - run: "cargo clippy -- -Dwarnings"
+      - run: "cargo test"
