@@ -2,6 +2,7 @@ use super::Register;
 use crate::util::*;
 
 mod condition;
+mod data;
 mod shifter;
 
 pub use condition::ConditionCode;
