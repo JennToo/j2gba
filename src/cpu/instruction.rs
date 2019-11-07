@@ -4,6 +4,7 @@ use crate::util::*;
 mod condition;
 mod data;
 mod shifter;
+mod multiply;
 
 pub use condition::ConditionCode;
 pub use shifter::{ShiftOperand, ShiftOperation, ShifterOperand};
