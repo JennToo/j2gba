@@ -5,6 +5,7 @@ mod condition;
 mod data;
 mod multiply;
 mod shifter;
+mod swap;
 
 pub use condition::ConditionCode;
 pub use shifter::{ShiftOperand, ShiftOperation, ShifterOperand};
