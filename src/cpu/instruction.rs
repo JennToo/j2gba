@@ -1,6 +1,7 @@
 use super::Register;
 use crate::util::*;
 
+mod branch;
 mod condition;
 mod data;
 mod multiply;
