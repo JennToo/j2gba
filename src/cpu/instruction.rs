@@ -3,8 +3,8 @@ use crate::util::*;
 
 mod condition;
 mod data;
-mod shifter;
 mod multiply;
+mod shifter;
 
 pub use condition::ConditionCode;
 pub use shifter::{ShiftOperand, ShiftOperation, ShifterOperand};
