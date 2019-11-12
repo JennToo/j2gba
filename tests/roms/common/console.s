@@ -20,8 +20,19 @@ simple_strcpy:
 .Ldone_simple_strcpy:
     bx lr
 
-
+// r0 - source
+// r1 - dest
+// r2 - clobbered
+// r3 - clobbered
+// r4 - clobbered
 console_write:
     mov r0,r2
-    ldr_unaligned r2,r3
+    ldr_unaligned r2,r3,r4
+    cmp r3,#0
+    beq .Ldone_console_write
+    
+    // TODO write out the tile
+
+    b console_write
+.Ldone_console_write
     bx lr
